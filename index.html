@@ -3,7 +3,26 @@
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script>
 
+setInterval(() => {
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:8080/results.php',
+        processData: false,
+        contentType: false
+    }).done(data => {
+        if (data.word_complexity_scores) {
+            $('#results').html(data.eval_text);
+            $('#results2').html(data.word_complexity_scores.join(", "));
+            $('#results3').html(data.total_score);
+            console.log('result?', data);
+            $("#loading_gif").css("display", "none");
+        }
+    });
+
+}, 1000);
+
 function postBlob(blob) {
+    $("#loading_gif").css("display", "block");
     const fd = new FormData();
     fd.append('fname', 'test.wav');
     fd.append('data', blob);
@@ -140,12 +159,13 @@ function writeString (view, offset, string) {
 
 </script>
 
-Step 0: Make Cognito pool
-cognito id pool: speech_pool
-authed id's role name: Cognito_speech_poolAuth_Role
-unauthed id's role name: Cognito_speech_poolUnauth_Role
+<img height="100px" src="https://icon-library.net//images/loading-icon-animated-gif/loading-icon-animated-gif-19.jpg" id="loading_gif" />
 
-Step 1: Build AWS SDK with Transcribe Service: https://sdk.amazonaws.com/builder/js/#
-
+Text: <pre id="results"></pre>
+Word Scores: <pre id="results2"></pre>
+Total Score: <pre id="results3"></pre>
+<script>
+    $("#loading_gif").css("display", "none");
+</script>
 </body>
 </html>

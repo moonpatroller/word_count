@@ -39,12 +39,14 @@ public class App extends AbstractHandler
     final String bucketName = "testing434224"; // unique s3 bucket name
     final String outputBucketName = bucketName + "output"; // unique s3 bucket name
 
+    String analyzeResult = null;
+
     void evaluateText(String input) {
         try {
             System.out.println("Starting analysis of: " + input);
             ProcessBuilder pb = new ProcessBuilder(
                 "C:\\Users\\Josh\\AppData\\Local\\Programs\\Python\\Python37-32\\python", 
-                "pystub.py").directory(new File("C:\\Users\\Josh\\Desktop\\projects\\angel_hack"));
+                "sentence_complexity_scoring.py").directory(new File("C:\\Users\\Josh\\Desktop\\projects\\angel_hack"));
             Process p = pb.start();
 
             new Thread(() -> {
@@ -61,6 +63,7 @@ public class App extends AbstractHandler
                 try {
                     String result = new BufferedReader(new InputStreamReader(p.getInputStream())).lines().collect(Collectors.joining("\n"));
                     System.out.println("Output: " + result);
+                    analyzeResult = result;
                 } catch(Exception e) {
                     System.out.println("Error reading from Python: " + e);
                 }
@@ -248,26 +251,46 @@ public class App extends AbstractHandler
                         HttpServletResponse response ) throws IOException,
                                                       ServletException
     {
-        // https://www.eclipse.org/lists/jetty-users/msg03294.html
-        baseRequest.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, new javax.servlet.MultipartConfigElement(System.getProperty("java.io.tmpdir")));
-        // https://docs.oracle.com/javaee/7/api/javax/servlet/http/Part.html
-        // System.out.println("data? " + request.getPart("data").getInputStream());
-        InputStream is = request.getPart("data").getInputStream();
-        writeAndConvert(is);
+        System.out.println("target " + target);
+        if (target.equals("/upload.php")) {
+            // https://www.eclipse.org/lists/jetty-users/msg03294.html
+            baseRequest.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, new javax.servlet.MultipartConfigElement(System.getProperty("java.io.tmpdir")));
+            // https://docs.oracle.com/javaee/7/api/javax/servlet/http/Part.html
+            // System.out.println("data? " + request.getPart("data").getInputStream());
+            InputStream is = request.getPart("data").getInputStream();
+            writeAndConvert(is);
 
-        // .\ffmpeg-20190712-81d3d7d-win64-static\bin\ffmpeg -i output.webm output.wav
+            // .\ffmpeg-20190712-81d3d7d-win64-static\bin\ffmpeg -i output.webm output.wav
 
-        // Declare response encoding and types
-        response.setContentType("text/html; charset=utf-8");
+            // Declare response encoding and types
+            response.setContentType("text/html; charset=utf-8");
 
-        // Declare response status code
-        response.setStatus(HttpServletResponse.SC_OK);
+            // Declare response status code
+            response.setStatus(HttpServletResponse.SC_OK);
 
-        // Write back response
-        response.getWriter().println("<h1>Hello World</h1>");
+            // Write back response
+            response.getWriter().println("<h1>Hello World</h1>");
 
-        // Inform jetty that this request has now been handled
-        baseRequest.setHandled(true);
+            // Inform jetty that this request has now been handled
+            baseRequest.setHandled(true);
+
+        } else {
+            // Declare response encoding and types
+            response.setContentType("application/json; charset=utf-8");
+
+            response.setHeader("Access-Control-Allow-Origin", "*");
+
+            // Declare response status code
+            response.setStatus(HttpServletResponse.SC_OK);
+
+            // Write back response
+            response.getWriter().println(analyzeResult == null ? "{}" : analyzeResult);
+
+            // Inform jetty that this request has now been handled
+            baseRequest.setHandled(true);
+            System.out.println("sent back " + analyzeResult);
+        }
+
     }
 
     public static void main(String[] args) throws Exception
