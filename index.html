@@ -33,38 +33,14 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     mediaRecorder.addEventListener("stop", () => {
         console.log('done', audioChunks.length, mediaRecorder.mimeType); // audio/webm;codecs=opus
         const audioBlob = new Blob(audioChunks);
-
-        // https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
-        // const fileReader = new FileReader();
-        // fileReader.onloadend = () => {
-        //     const arrayBuffer = fileReader.result;
-        //     console.log('arrayBuffer', arrayBuffer, BaseAudioContext);
-
-            // BaseAudioContext.decodeData(arrayBuffer).then(r => {
-            //     const wavBuffer = audioBufferToWav(r);
-            //     console.log('wavBuffer', wavBuffer);
-            // });
-
-            // https://github.com/Jam3/audiobuffer-to-wav
-            // const wavBuffer = audioBufferToWav(arrayBuffer);
-            // console.log('wavBuffer', wavBuffer);
-        // }
-
-        // fileReader.readAsArrayBuffer(audioBlob);
-
-        // const audioUrl = URL.createObjectURL(audioBlob);
-        // console.log('audioUrl', audioUrl);
-        // const audio = new Audio(audioUrl);
-        // audio.play();
         postBlob(audioBlob);
     });
 
     setTimeout(() => {
         mediaRecorder.stop();
-    }, 5000);
+    }, 15 * 1000);
 
   });
-
 
 
 function audioBufferToWav (buffer, opt) {

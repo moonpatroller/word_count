@@ -39,6 +39,54 @@ public class App extends AbstractHandler
     final String bucketName = "testing434224"; // unique s3 bucket name
     final String outputBucketName = bucketName + "output"; // unique s3 bucket name
 
+    void evaluateText(String input) {
+        try {
+            System.out.println("Starting analysis of: " + input);
+            ProcessBuilder pb = new ProcessBuilder(
+                "C:\\Users\\Josh\\AppData\\Local\\Programs\\Python\\Python37-32\\python", 
+                "pystub.py").directory(new File("C:\\Users\\Josh\\Desktop\\projects\\angel_hack"));
+            Process p = pb.start();
+
+            new Thread(() -> {
+                try {
+                    p.getOutputStream().write((input + "\r\n").getBytes());
+                    p.getOutputStream().flush();
+                    System.out.println("Wrote to python: " + input);
+                } catch(Exception e) {
+                    System.out.println("Error writing input to Python: " + e);
+                }
+            }).start();
+
+            new Thread(() -> {
+                try {
+                    String result = new BufferedReader(new InputStreamReader(p.getInputStream())).lines().collect(Collectors.joining("\n"));
+                    System.out.println("Output: " + result);
+                } catch(Exception e) {
+                    System.out.println("Error reading from Python: " + e);
+                }
+            }).start();
+
+            new Thread(() -> {
+                try {
+                    String result = new BufferedReader(new InputStreamReader(p.getErrorStream())).lines().collect(Collectors.joining("\n"));
+                    System.out.println("Error analyzing: " + result);
+                } catch(Exception e) {
+                    System.out.println("Error reading error stream from Python: " + e);
+                }
+            }).start();
+
+            try {
+                System.out.println("Starting to wait for analysis.");
+                p.waitFor();
+            } catch(Exception e) {
+                System.out.println("Error waiting for python analyze process: " + e);
+            }
+            System.out.println("Waiting for analysis.");
+        } catch(Exception e) {
+            System.out.println("Error with python analyze process: " + e);
+        }
+    }
+
     void processTranscribedTest(String s3Key) {
         String fileObjKeyName = "key" + System.currentTimeMillis();
 
@@ -58,10 +106,10 @@ public class App extends AbstractHandler
                 JsonNode root = mapper.readTree(result);
                 JsonNode value = root.get("results").get("transcripts").get(0).get("transcript");
                 System.out.println("value: " + Arrays.asList(value.textValue().split("\\s")));
+                evaluateText(value.textValue());
             } catch (Exception e) {
                 System.out.println("e! " + e);
             }
-//            hi
         }
         catch(AmazonServiceException e) {
             e.printStackTrace();
